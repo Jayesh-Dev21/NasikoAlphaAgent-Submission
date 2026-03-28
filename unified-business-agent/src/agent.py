@@ -147,8 +147,8 @@ class Agent:
             model="llama-3.3-70b-versatile",
             temperature=0.2,  # Balanced: professional but not robotic
             groq_api_key=groq_api_key,
-            max_retries=2,
-            request_timeout=30
+            max_retries=0,
+            request_timeout=20,
         )
         logger.info("  ✓ LLM initialized (Groq llama-3.3-70b-versatile, temp=0.2)")
         
@@ -165,7 +165,7 @@ class Agent:
             agent=agent,
             memory=self.memory,
             tools=self.tools,
-            verbose=True,
+            verbose=False,
             max_iterations=15,  # Allow complex multi-step tasks
             handle_parsing_errors=True,
             return_intermediate_steps=False
@@ -312,9 +312,44 @@ Always strive to provide maximum value while maintaining accuracy and profession
 
         return ChatPromptTemplate.from_messages([
             ("system", system_message),
+            MessagesPlaceholder(variable_name="chat_history", optional=True),
             ("user", "{input}"),
             MessagesPlaceholder(variable_name="agent_scratchpad"),
         ])
+
+    def _capabilities_summary(self) -> str:
+        """Return a fast, static capabilities response."""
+        return (
+            "I can help across five business areas: "
+            "(1) customer support tickets and sentiment analysis, "
+            "(2) data analytics for CSV/Excel/JSON datasets, "
+            "(3) finance tasks like expenses, invoice OCR, and budget checks, "
+            "(4) scheduling meetings and finding time slots, and "
+            "(5) document OCR and extraction. "
+            "You can ask me for single tasks or end-to-end multi-step workflows."
+        )
+
+    def _is_capability_query(self, text: str) -> bool:
+        """Detect simple capability/help prompts that should skip LLM."""
+        normalized = text.strip().lower()
+        direct = {
+            "what can you help me with?",
+            "what can you help me with",
+            "help",
+            "capabilities",
+            "what can you do",
+            "what can you do?",
+            "who are you",
+            "who are you?",
+        }
+        if normalized in direct:
+            return True
+        return (
+            "what can you" in normalized
+            or "how can you" in normalized
+            or "help me" in normalized
+            or "capabilit" in normalized
+        )
     
     def process_message(
         self,
@@ -338,6 +373,11 @@ Always strive to provide maximum value while maintaining accuracy and profession
         try:
             logger.info(f"Processing message (session: {session_id})")
             logger.debug(f"Input: {input_text}")
+
+            # Fast-path for capability/help requests so the system remains responsive
+            # even if external LLM calls are slow/unavailable.
+            if self._is_capability_query(input_text):
+                return self._capabilities_summary()
             
             # Invoke the agent executor
             result = self.agent_executor.invoke({
@@ -353,6 +393,10 @@ Always strive to provide maximum value while maintaining accuracy and profession
             
         except Exception as e:
             logger.error(f"Error processing message: {e}", exc_info=True)
+            # If provider/network fails and this is a help-capability prompt,
+            # return local static response instead of error text.
+            if self._is_capability_query(input_text):
+                return self._capabilities_summary()
             return (
                 f"I apologize, but I encountered an error processing your request: {str(e)}. "
                 "Please try again or rephrase your question. If the issue persists, "

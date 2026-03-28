@@ -35,6 +35,8 @@ class ResultAggregator:
             groq_api_key=api_key,
             model_name=model,
             temperature=temperature,  # Natural but consistent
+            max_retries=0,
+            request_timeout=15,
         )
 
         logger.info(f"Aggregator initialized with model: {model}, temperature: {temperature}")

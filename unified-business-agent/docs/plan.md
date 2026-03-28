@@ -794,7 +794,7 @@ zip -r unified-business-agent.zip . \
 # Groq Cloud API
 GROQ_API_KEY=your_groq_api_key
 
-# Google APIs
+# Optional: Google APIs (calendar + Gmail). If omitted, app uses mock modes.
 GOOGLE_CREDENTIALS_PATH=/app/credentials/google_credentials.json
 GOOGLE_CALENDAR_ID=primary
 
@@ -803,7 +803,7 @@ MONGODB_URI=mongodb://localhost:27017/
 MONGODB_DATABASE=BusinessAgentDB
 USE_MONGODB=true
 
-# Email Configuration
+# Optional: SMTP fallback (not required)
 SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USERNAME=your_email@gmail.com
@@ -813,8 +813,11 @@ SMTP_PASSWORD=your_app_password
 DOCUMENT_AI_ENDPOINT=https://api.documentai.com
 DOCUMENT_AI_API_KEY=your_key
 
-# Optional: Support Ticket System
-TICKET_SYSTEM_ENDPOINT=https://api.ticketsystem.com
+# Optional: External Support Ticket System
+# Keep TICKET_SYSTEM_TYPE=internal for built-in DB ticketing (default)
+# Example Zendesk endpoint: https://your-subdomain.zendesk.com/api/v2
+# Example Freshdesk endpoint: https://your-domain.freshdesk.com/api/v2
+TICKET_SYSTEM_ENDPOINT=
 TICKET_SYSTEM_API_KEY=your_key
 ```
 
@@ -890,4 +893,3 @@ The 25-day development plan provides a clear roadmap from foundation to deployme
 2. Set up development environment
 3. Begin Phase 1: Foundation
 4. Iterate and refine based on progress
-

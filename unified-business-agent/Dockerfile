@@ -1,7 +1,7 @@
 # Unified Business Agent - Dockerfile
 # Team Sleepyhead - Nasiko Hackathon 2026
 
-FROM python:3.11-slim
+FROM python:3.11-slim-bookworm
 
 # Set working directory
 WORKDIR /app
@@ -13,7 +13,8 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update -o Acquire::Retries=5 -o Acquire::http::Timeout=30 && apt-get install -y --no-install-recommends \
+    ca-certificates \
     tesseract-ocr \
     tesseract-ocr-eng \
     poppler-utils \
@@ -31,8 +32,8 @@ RUN pip install --upgrade pip && \
     uvicorn>=0.27.0 \
     pydantic>=2.6.0 \
     python-dotenv>=1.0.0 \
-    langchain>=0.2.0,<0.3.0 \
-    langchain-core>=0.2.0,<0.3.0 \
+    "langchain>=0.2.0,<0.3.0" \
+    "langchain-core>=0.2.0,<0.3.0" \
     langchain-groq>=0.1.0 \
     groq>=0.4.0 \
     pymongo>=4.6.0 \

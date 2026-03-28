@@ -1,5 +1,5 @@
 ## Build Progress
-- Project: Unified Business Agent
+- Project: PrathamAi - A Unified Business Agent
 - Team: Sleepyhead
 - Status: Core implementation complete (code), ready for integration run with dependencies
 

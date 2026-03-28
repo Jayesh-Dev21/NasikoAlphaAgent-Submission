@@ -1,7 +1,7 @@
 {
   "protocolVersion": "0.2.9",
-  "name": "Unified Business Agent",
-  "description": "A sophisticated multi-domain AI agent for customer service, data analytics, and finance/accounting. Handles support tickets, data analysis, expense tracking, scheduling, and document processing with intelligent workflow orchestration. Built by Team Sleepyhead for Nasiko Hackathon 2026.",
+  "name": "PrathamAi - A Unified Business Agent",
+  "description": "PrathamAi is a sophisticated multi-domain AI agent for customer service, data analytics, and finance/accounting. It handles support tickets, data analysis, expense tracking, scheduling, and document processing with intelligent workflow orchestration. Built by Team Sleepyhead for Nasiko Hackathon 2026.",
   "url": "http://localhost:5000/",
   "preferredTransport": "JSONRPC",
   "provider": {

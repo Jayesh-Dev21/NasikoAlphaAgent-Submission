@@ -1,4 +1,4 @@
-# Unified Business Agent
+# PrathamAi - A Unified Business Agent
 
 > A sophisticated multi-domain AI agent for customer service, data analytics, and finance/accounting built for the Nasiko Hackathon by Team Sleepyhead
 
@@ -9,7 +9,7 @@
 
 ## Overview
 
-The **Unified Business Agent (UBA)** is an intelligent, end-to-end AI agent that seamlessly handles three critical business domains:
+**PrathamAi** is an intelligent, end-to-end unified business agent that seamlessly handles three critical business domains:
 
 - **Customer Service**: Support ticket management, sentiment analysis, FAQ automation
 - **Data Analytics**: Dataset processing, insights generation, reporting
@@ -250,8 +250,8 @@ erDiagram
         string description
         string status
         string priority
-        datetime created_at
-        object sentiment
+        string created_at
+        string sentiment_json
     }
     
     DATASETS {
@@ -260,9 +260,9 @@ erDiagram
         string file_path
         string format
         int rows
-        int columns
-        object schema
-        datetime uploaded_at
+        int column_count
+        string schema_json
+        string uploaded_at
     }
     
     EXPENSES {
@@ -271,7 +271,7 @@ erDiagram
         string currency
         string category
         string vendor
-        date date
+        string expense_date
         string status
         string receipt_url
     }
@@ -280,9 +280,9 @@ erDiagram
         string event_id PK
         string google_event_id
         string title
-        datetime start_time
-        datetime end_time
-        array attendees
+        string start_time
+        string end_time
+        string attendees_json
         string meet_link
     }
     
@@ -290,12 +290,12 @@ erDiagram
         string document_id PK
         string file_path
         string document_type
-        object structured_data
+        string structured_data_json
         float confidence_score
-        datetime processed_at
+        string processed_at
     }
     
-    TICKETS ||--o{ EVENTS : "follow-up"
+    TICKETS ||--o{ EVENTS : "follow_up"
     EXPENSES ||--o| DOCUMENTS : "receipt"
     EXPENSES ||--o{ EVENTS : "discussion"
 ```

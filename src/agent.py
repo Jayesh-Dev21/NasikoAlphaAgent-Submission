@@ -7,6 +7,7 @@ Nasiko Hackathon 2026
 
 import os
 import logging
+import re
 from typing import Dict, Any, Optional
 
 from langchain_groq import ChatGroq
@@ -44,7 +45,7 @@ class Agent:
     def __init__(self):
         """Initialize the agent with all components."""
         
-        self.name = "Unified Business Agent - Team Sleepyhead"
+        self.name = "PrathamAi - A Unified Business Agent"
         logger.info("=" * 80)
         logger.info("Initializing Unified Business Agent...")
         logger.info("=" * 80)
@@ -376,6 +377,68 @@ Always strive to provide maximum value while maintaining accuracy and profession
             "The LLM provider is temporarily unreachable (network/DNS). "
             "Core service is healthy. Please retry in a moment, or ask a structured task and I will process it with available tools."
         )
+
+    def _extract_ticket_request(self, text: str) -> Optional[Dict[str, str]]:
+        """Parse simple ticket-creation prompts without LLM.
+
+        Supported style examples:
+        - "Create a high-priority ticket for john@example.com about login issues"
+        - "Create ticket for jane@acme.com about password reset"
+        """
+        lowered = text.strip().lower()
+        if "ticket" not in lowered or "create" not in lowered:
+            return None
+
+        email_match = re.search(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", text)
+        about_match = re.search(r"\babout\b\s+(.+)$", text, flags=re.IGNORECASE)
+
+        if not email_match:
+            return None
+
+        customer_email = email_match.group(0)
+        subject = about_match.group(1).strip() if about_match else "Support request"
+        description = f"Customer reported: {subject}"
+
+        priority = "medium"
+        if "urgent" in lowered:
+            priority = "urgent"
+        elif "high-priority" in lowered or "high priority" in lowered or "high" in lowered:
+            priority = "high"
+        elif "low" in lowered:
+            priority = "low"
+
+        local_name = customer_email.split("@")[0].replace(".", " ").replace("_", " ").strip()
+        customer_name = " ".join(part.capitalize() for part in local_name.split()) or "Customer"
+
+        return {
+            "customer_name": customer_name,
+            "customer_email": customer_email,
+            "subject": subject[:120],
+            "description": description,
+            "priority": priority,
+            "category": "technical",
+        }
+
+    def _handle_local_task(self, text: str) -> Optional[str]:
+        """Handle key tasks deterministically when LLM is unavailable."""
+        ticket_payload = self._extract_ticket_request(text)
+        if ticket_payload:
+            try:
+                from src.modules.customer_service import CustomerServiceModule
+
+                module = CustomerServiceModule(self.db)
+                result = module.execute("create_ticket", ticket_payload)
+                if result.get("success"):
+                    return (
+                        f"Ticket created successfully. ID: {result.get('ticket_id')}. "
+                        f"Priority: {result.get('priority', 'medium')}. "
+                        f"Customer: {result.get('customer_email')}."
+                    )
+                return f"Could not create ticket: {result.get('error', 'Unknown error')}"
+            except Exception as exc:
+                logger.error("Local ticket handling failed: %s", exc, exc_info=True)
+                return f"Could not create ticket due to an internal error: {exc}"
+        return None
     
     def process_message(
         self,
@@ -410,6 +473,11 @@ Always strive to provide maximum value while maintaining accuracy and profession
             lowered = input_text.strip().lower()
             if "summarize what you can do" in lowered:
                 return self._capabilities_summary()
+
+            # Deterministic local handler for core structured tasks.
+            local_response = self._handle_local_task(input_text)
+            if local_response:
+                return local_response
             
             # Invoke the agent executor
             result = self.agent_executor.invoke({
@@ -439,6 +507,9 @@ Always strive to provide maximum value while maintaining accuracy and profession
                 or "apiconnectionerror" in error_text
                 or "temporary failure in name resolution" in error_text
             ):
+                local_response = self._handle_local_task(input_text)
+                if local_response:
+                    return local_response
                 return self._offline_fallback_response(input_text)
             # If provider/network fails and this is a help-capability prompt,
             # return local static response instead of error text.

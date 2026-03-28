@@ -35,7 +35,7 @@ logging.basicConfig(
         logging.FileHandler('logs/agent.log', mode='a')
     ]
 )
-logger = logging.getLogger("unified-business-agent")
+logger = logging.getLogger("prathamai-agent")
 
 # FastAPI application
 app = FastAPI(
@@ -129,7 +129,7 @@ async def health_check():
     
     return {
         "status": "healthy",
-        "service": "unified-business-agent",
+        "service": "prathamai-agent",
         "timestamp": datetime.now().isoformat(),
         "agent_initialized": True
     }

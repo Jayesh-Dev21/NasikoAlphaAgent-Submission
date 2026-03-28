@@ -1,6 +1,6 @@
-# PrathamAi - A Unified Business Agent
+# Hackathon Agent Development Guide
 
-> A sophisticated multi-domain AI agent for customer service, data analytics, and finance/accounting built for the Nasiko Hackathon by Team Sleepyhead
+Complete guide for building and deploying agents using the Nasiko platform and the A2A Agent Template.
 
 [![A2A Protocol](https://img.shields.io/badge/A2A-0.2.9-blue)](https://nasiko.ai)
 [![Python](https://img.shields.io/badge/Python-3.11+-green)](https://python.org)
@@ -65,18 +65,18 @@ Key implemented paths:
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/prathamai-unified-business-agent.git
-cd prathamai-unified-business-agent
+git clone https://github.com/your-username/unified-business-agent.git
+cd unified-business-agent
 
 # Create environment file
 cp .env.example .env
 # Edit .env with your API keys
 
 # Build Docker image
-docker build -t prathamai-agent .
+docker build -t unified-business-agent .
 
 # Run the agent
-docker run -p 5000:5000 --env-file .env prathamai-agent
+docker run -p 5000:5000 --env-file .env unified-business-agent
 ```
 
 ### Quick Test
@@ -462,7 +462,7 @@ If you want to use Google Calendar and Gmail features:
 ### Project Structure
 
 ```
-project-root/
+unified-business-agent/
 ├── docs/                          # Documentation
 │   ├── plan.md                    # Development plan
 │   ├── structure.md               # Project structure
@@ -557,7 +557,7 @@ docker-compose down
 
 ```bash
 # Create deployment package
-zip -r prathamai-agent.zip . \
+zip -r unified-business-agent.zip . \
   -x "*.pyc" "*/__pycache__/*" "*/.git/*" "*/.env"
 
 # Upload via Nasiko dashboard
@@ -665,9 +665,9 @@ curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
 - Symptom: `Connection error` or `Temporary failure in name resolution` in logs
 - Root cause: container cannot consistently resolve external hosts (e.g., `api.groq.com`)
 - Fixes:
-  - Run with host network: `docker run --rm --network=host --env-file .env prathamai-agent`
+  - Run with host network: `docker run --rm --network=host --env-file .env unified-business-agent`
   - Use configured DNS in compose (`1.1.1.1`, `8.8.8.8`)
-  - Build with host network when needed: `docker build --network=host -t prathamai-agent .`
+  - Build with host network when needed: `docker build --network=host -t unified-business-agent .`
 
 **JSON-RPC validation error (`id` missing)**
 - `id` is optional now, but include it in production for traceability.

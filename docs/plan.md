@@ -734,17 +734,17 @@ async def test_create_ticket():
 ```bash
 # 1. Clone repository
 git clone <repo-url>
-cd unified-business-agent
+cd prathamai-unified-business-agent
 
 # 2. Create .env file
 cp .env.example .env
 # Edit .env with your API keys
 
 # 3. Build Docker image
-docker build -t unified-business-agent .
+docker build -t prathamai-agent .
 
 # 4. Run locally
-docker run -p 5000:5000 --env-file .env unified-business-agent
+docker run -p 5000:5000 --env-file .env prathamai-agent
 
 # 5. Test
 curl -X POST http://localhost:5000/ \
@@ -776,7 +776,7 @@ git push origin main
 
 ```bash
 # 1. Create ZIP file
-zip -r unified-business-agent.zip . \
+zip -r prathamai-agent.zip . \
   -x "*.pyc" "*/__pycache__/*" "*/.git/*" "*/.env"
 
 # 2. Upload via Nasiko dashboard

@@ -240,9 +240,8 @@ class FileDatabase(Database):
     
     def create_ticket(self, ticket_data: Dict[str, Any]) -> str:
         """Create a support ticket."""
-        db = self._load_db()
-        
         ticket_id = f"TICKET-{self._get_next_id('ticket_counter')}"
+        db = self._load_db()
         
         ticket = {
             "ticket_id": ticket_id,
@@ -338,9 +337,8 @@ class FileDatabase(Database):
     
     def create_expense(self, expense_data: Dict[str, Any]) -> str:
         """Create expense record."""
-        db = self._load_db()
-        
         expense_id = f"EXP-{self._get_next_id('expense_counter')}"
+        db = self._load_db()
         
         expense = {
             "expense_id": expense_id,
@@ -398,9 +396,8 @@ class FileDatabase(Database):
     
     def create_event(self, event_data: Dict[str, Any]) -> str:
         """Create calendar event."""
-        db = self._load_db()
-        
         event_id = f"EVENT-{self._get_next_id('event_counter')}"
+        db = self._load_db()
         
         event = {
             "event_id": event_id,
@@ -451,9 +448,8 @@ class FileDatabase(Database):
     
     def save_document(self, doc_data: Dict[str, Any]) -> str:
         """Save processed document."""
-        db = self._load_db()
-        
         doc_id = f"DOC-{self._get_next_id('document_counter')}"
+        db = self._load_db()
         
         document = {
             "doc_id": doc_id,

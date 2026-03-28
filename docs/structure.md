@@ -5,7 +5,7 @@ Complete guide to the Unified Business Agent's file organization and architectur
 ## Directory Tree
 
 ```
-unified-business-agent/
+project-root/
 ├── docs/                                    # Documentation
 │   ├── plan.md                              # 25-day development plan
 │   ├── structure.md                         # This file - project structure

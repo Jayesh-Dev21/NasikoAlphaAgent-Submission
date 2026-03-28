@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "unified-business-agent"
+name = "prathamai-unified-business-agent"
 version = "1.0.0"
 description = "Multi-domain AI agent for customer service, data analytics, and finance/accounting"
 readme = "README.md"
@@ -83,14 +83,14 @@ test = [
 ]
 
 all = [
-    "unified-business-agent[dev,test]",
+    "prathamai-unified-business-agent[dev,test]",
 ]
 
 [project.urls]
-Homepage = "https://github.com/sleepyhead-team/unified-business-agent"
-Documentation = "https://github.com/sleepyhead-team/unified-business-agent/blob/main/README.md"
-Repository = "https://github.com/sleepyhead-team/unified-business-agent"
-Issues = "https://github.com/sleepyhead-team/unified-business-agent/issues"
+Homepage = "https://github.com/sleepyhead-team/prathamai-unified-business-agent"
+Documentation = "https://github.com/sleepyhead-team/prathamai-unified-business-agent/blob/main/README.md"
+Repository = "https://github.com/sleepyhead-team/prathamai-unified-business-agent"
+Issues = "https://github.com/sleepyhead-team/prathamai-unified-business-agent/issues"
 
 [project.scripts]
 uba = "src.__main__:main"

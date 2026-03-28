@@ -6,7 +6,7 @@
   "preferredTransport": "JSONRPC",
   "provider": {
     "organization": "Team Sleepyhead",
-    "url": "https://github.com/sleepyhead-team/unified-business-agent"
+    "url": "https://github.com/sleepyhead-team/prathamai-unified-business-agent"
   },
   "version": "1.0.0",
   "capabilities": {

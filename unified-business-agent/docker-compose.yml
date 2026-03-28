@@ -21,6 +21,9 @@ services:
       - GOOGLE_CALENDAR_ID=${GOOGLE_CALENDAR_ID:-primary}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - DEBUG=${DEBUG:-false}
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     volumes:
       # Mount credentials (if available)
       - ./credentials:/app/credentials:ro
@@ -31,7 +34,7 @@ services:
       - agent-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5000/health', timeout=5)"]
       interval: 30s
       timeout: 10s
       retries: 3

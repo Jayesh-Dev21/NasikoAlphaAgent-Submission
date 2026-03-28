@@ -47,7 +47,7 @@ class JSONRPCRequest(BaseModel):
     """JSON-RPC 2.0 Request"""
 
     jsonrpc: Literal["2.0"] = "2.0"
-    id: str
+    id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()))
     method: str  # message/send, agent/capabilities, etc.
     params: MessageParams
 

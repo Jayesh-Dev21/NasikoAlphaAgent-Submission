@@ -1,0 +1,63 @@
+# Unified Business Agent - Docker Compose
+# Team Sleepyhead - Nasiko Hackathon 2026
+
+version: '3.8'
+
+services:
+  unified-business-agent:
+    build: .
+    container_name: unified-business-agent
+    ports:
+      - "5000:5000"
+    environment:
+      # Load from .env file
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - GROQ_MODEL_PRIMARY=${GROQ_MODEL_PRIMARY:-llama-3.3-70b-versatile}
+      - GROQ_MODEL_SECONDARY=${GROQ_MODEL_SECONDARY:-llama-3.1-70b-versatile}
+      - MONGODB_URI=${MONGODB_URI:-mongodb://localhost:27017/}
+      - MONGODB_DATABASE=${MONGODB_DATABASE:-BusinessAgentDB}
+      - USE_MONGODB=${USE_MONGODB:-true}
+      - GOOGLE_CREDENTIALS_PATH=${GOOGLE_CREDENTIALS_PATH:-/app/credentials/google_credentials.json}
+      - GOOGLE_CALENDAR_ID=${GOOGLE_CALENDAR_ID:-primary}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - DEBUG=${DEBUG:-false}
+    volumes:
+      # Mount credentials (if available)
+      - ./credentials:/app/credentials:ro
+      # Mount data directories (persistent storage)
+      - ./data:/app/data
+      - ./logs:/app/logs
+    networks:
+      - agent-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Optional: MongoDB for local development
+  # Uncomment if you want to run MongoDB in Docker
+  # mongodb:
+  #   image: mongo:7.0
+  #   container_name: uba-mongodb
+  #   ports:
+  #     - "27017:27017"
+  #   environment:
+  #     - MONGO_INITDB_DATABASE=BusinessAgentDB
+  #   volumes:
+  #     - mongodb-data:/data/db
+  #   networks:
+  #     - agent-network
+  #   restart: unless-stopped
+
+networks:
+  agent-network:
+    external: true
+    name: agent_network
+
+# Uncomment if using MongoDB service
+# volumes:
+#   mongodb-data:
+#     driver: local

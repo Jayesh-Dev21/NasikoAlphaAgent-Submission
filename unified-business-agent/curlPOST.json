@@ -1,0 +1,18 @@
+{
+  "jsonrpc": "2.0",
+  "id": "test-customer-service",
+  "method": "message/send",
+  "params": {
+    "session_id": "session-12345",
+    "message": {
+      "role": "user",
+      "parts": [
+        {
+          "kind": "text",
+          "text": "Create a high-priority support ticket for customer@example.com with subject 'Cannot access dashboard' and description 'User reports unable to log into the dashboard after password reset'"
+        }
+      ],
+      "messageId": "msg-001"
+    }
+  }
+}

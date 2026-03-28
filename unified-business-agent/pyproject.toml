@@ -1,0 +1,149 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "unified-business-agent"
+version = "1.0.0"
+description = "Multi-domain AI agent for customer service, data analytics, and finance/accounting"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "Team Sleepyhead", email = "team@sleepyhead.dev"}
+]
+keywords = ["ai", "agent", "business", "customer-service", "analytics", "finance", "nasiko", "a2a"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    # Web Framework
+    "fastapi>=0.109.0",
+    "uvicorn>=0.27.0",
+    "pydantic>=2.6.0",
+    "python-dotenv>=1.0.0",
+    
+    # LangChain Ecosystem
+    "langchain>=0.2.0,<0.3.0",
+    "langchain-core>=0.2.0,<0.3.0",
+    "langchain-groq>=0.1.0",
+    
+    # Groq Cloud (LLM Provider)
+    "groq>=0.4.0",
+    
+    # Database
+    "pymongo>=4.6.0",
+    
+    # Data Processing
+    "pandas>=2.0.0",
+    "openpyxl>=3.1.0",  # Excel support
+    "numpy>=1.24.0",
+    
+    # Google APIs
+    "google-auth>=2.27.0",
+    "google-auth-oauthlib>=1.2.0",
+    "google-auth-httplib2>=0.2.0",
+    "google-api-python-client>=2.115.0",
+    
+    # Document Processing / OCR
+    "pytesseract>=0.3.10",
+    "Pillow>=10.0.0",
+    "PyPDF2>=3.0.0",
+    "pdf2image>=1.16.3",
+    
+    # Utilities
+    "requests>=2.31.0",
+    "click>=8.1.7",
+    "python-dateutil>=2.8.2",
+    "pytz>=2024.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+    "isort>=5.12.0",
+]
+
+test = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.11.1",
+    "httpx>=0.25.0",  # For testing FastAPI
+]
+
+all = [
+    "unified-business-agent[dev,test]",
+]
+
+[project.urls]
+Homepage = "https://github.com/sleepyhead-team/unified-business-agent"
+Documentation = "https://github.com/sleepyhead-team/unified-business-agent/blob/main/README.md"
+Repository = "https://github.com/sleepyhead-team/unified-business-agent"
+Issues = "https://github.com/sleepyhead-team/unified-business-agent/issues"
+
+[project.scripts]
+uba = "src.__main__:main"
+
+[tool.setuptools]
+packages = ["src", "src.core", "src.modules", "src.utils"]
+
+[tool.setuptools.package-data]
+src = ["*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--verbose",
+    "--cov=src",
+    "--cov-report=html",
+    "--cov-report=term-missing",
+]
+asyncio_mode = "auto"
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | build
+  | dist
+  | __pycache__
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+ignore_errors = true

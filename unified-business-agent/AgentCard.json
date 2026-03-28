@@ -1,0 +1,106 @@
+{
+  "protocolVersion": "0.2.9",
+  "name": "Unified Business Agent",
+  "description": "A sophisticated multi-domain AI agent for customer service, data analytics, and finance/accounting. Handles support tickets, data analysis, expense tracking, scheduling, and document processing with intelligent workflow orchestration. Built by Team Sleepyhead for Nasiko Hackathon 2026.",
+  "url": "http://localhost:5000/",
+  "preferredTransport": "JSONRPC",
+  "provider": {
+    "organization": "Team Sleepyhead",
+    "url": "https://github.com/sleepyhead-team/unified-business-agent"
+  },
+  "version": "1.0.0",
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "stateTransitionHistory": true,
+    "chat_agent": true
+  },
+  "defaultInputModes": ["text"],
+  "defaultOutputModes": ["text"],
+  "skills": [
+    {
+      "id": "customer_service",
+      "name": "Customer Service",
+      "description": "Comprehensive customer service management including support ticket creation, tracking, sentiment analysis, and automated FAQ responses. Manages the entire customer support lifecycle with intelligent categorization and priority assignment.",
+      "tags": ["support", "tickets", "customer-service", "FAQ", "sentiment-analysis", "helpdesk"],
+      "examples": [
+        "Create a support ticket for john.doe@example.com about login issues with high priority",
+        "What's the status of ticket TKT-20260328-001?",
+        "Show me all open high-priority tickets",
+        "Analyze the sentiment of this customer message: I'm very frustrated with the slow response",
+        "Close ticket TKT-001 with resolution: Password reset completed",
+        "Find similar tickets about login problems"
+      ]
+    },
+    {
+      "id": "data_analytics",
+      "name": "Data Analytics",
+      "description": "Advanced data processing and analysis capabilities for CSV, Excel, and JSON files. Performs statistical analysis, pattern detection, trend identification, and generates comprehensive reports with actionable insights.",
+      "tags": ["analytics", "data", "reporting", "insights", "visualization", "statistics", "business-intelligence"],
+      "examples": [
+        "Analyze this sales CSV file and show me the top 3 trends",
+        "Load the quarterly revenue data from /data/q1_2026.xlsx",
+        "Generate a detailed report from dataset DS-20260328-001",
+        "What patterns do you see in the customer purchase behavior data?",
+        "Create a summary of Q1 revenue broken down by product category",
+        "Find correlations between marketing spend and sales revenue"
+      ]
+    },
+    {
+      "id": "finance_accounting",
+      "name": "Finance & Accounting",
+      "description": "Complete financial management system with expense tracking, invoice processing using OCR, receipt digitization, budget monitoring, and financial reporting. Automatically categorizes expenses and generates compliance-ready reports.",
+      "tags": ["finance", "accounting", "expenses", "invoices", "OCR", "budgets", "receipts", "financial-reports"],
+      "examples": [
+        "Process this invoice image at /uploads/invoice_acme.pdf and create an expense record",
+        "Add an expense of $125.50 for office supplies from Staples purchased on March 28th",
+        "Show me all expenses from last month in the travel category",
+        "What's my current spend against the Q1 marketing budget?",
+        "Generate a financial summary report for the first quarter of 2026",
+        "Process these 5 receipt images and categorize them automatically"
+      ]
+    },
+    {
+      "id": "scheduling_calendar",
+      "name": "Scheduling & Calendar Management",
+      "description": "Intelligent calendar and meeting management with Google Calendar integration. Schedules meetings, finds optimal time slots, sends invitations via email, and handles timezone conversions automatically.",
+      "tags": ["scheduling", "calendar", "meetings", "events", "google-calendar", "invitations", "time-management"],
+      "examples": [
+        "Schedule a 30-minute meeting with client@example.com next Tuesday at 2 PM EST",
+        "Find available time slots for a 1-hour meeting this week",
+        "What meetings do I have scheduled for tomorrow?",
+        "Cancel the meeting with event ID EVT-20260328-001",
+        "Reschedule my 3 PM meeting to 4 PM and notify all attendees",
+        "Find a time when both john@example.com and jane@example.com are available"
+      ]
+    },
+    {
+      "id": "document_processing",
+      "name": "Document Processing & OCR",
+      "description": "Advanced document processing with OCR capabilities for invoices, receipts, forms, and reports. Extracts structured data from PDFs and images, validates information, and integrates with other business workflows.",
+      "tags": ["OCR", "document-processing", "text-extraction", "invoices", "receipts", "PDF", "automation"],
+      "examples": [
+        "Extract all text from this invoice PDF",
+        "Process this receipt image and tell me the vendor, amount, and date",
+        "Validate this document as a properly formatted invoice",
+        "Batch process these 10 receipt images from /uploads/receipts/",
+        "Extract line items from this multi-page invoice PDF",
+        "What information can you extract from this business card image?"
+      ]
+    },
+    {
+      "id": "multi_domain_workflows",
+      "name": "Multi-Domain Workflows",
+      "description": "Execute complex workflows spanning multiple business domains. Intelligently orchestrates tasks across customer service, analytics, finance, and scheduling to handle sophisticated business processes end-to-end.",
+      "tags": ["workflows", "orchestration", "automation", "multi-step", "integration", "business-process"],
+      "examples": [
+        "I have an invoice from Acme Corp for $1,250. Process it, create an expense record, and schedule a meeting next week to discuss",
+        "Analyze our Q1 sales data, create a report, and email it to the leadership team",
+        "Create a support ticket for this customer complaint, analyze the sentiment, and if negative, schedule a follow-up call",
+        "Process these expense receipts, categorize them, check if they're within budget, and generate a summary report",
+        "Load the customer feedback dataset, analyze sentiment trends, and create tickets for any negative feedback",
+        "Schedule interviews with all shortlisted candidates and send them calendar invitations"
+      ]
+    }
+  ]
+}

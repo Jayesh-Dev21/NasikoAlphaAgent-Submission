@@ -72,11 +72,15 @@ cd prathamai-unified-business-agent
 cp .env.example .env
 # Edit .env with your API keys
 
-# Build Docker image
-docker build -t unified-business-agent .
+# Build Docker image (use --network=host if DNS issues occur)
+docker build --network=host -t unified-business-agent .
 
-# Run the agent (maps host port 8080 to container port 5000)
-docker run --rm -p 8080:5000 --env-file .env unified-business-agent
+# Run the agent (use --network=host for direct host networking)
+# This avoids DNS resolution issues and allows MongoDB Atlas connectivity
+docker run --rm --network=host --env-file .env unified-business-agent
+
+# Alternative: Run with port mapping (may have DNS issues in some environments)
+# docker run --rm -p 5000:5000 --env-file .env unified-business-agent
 ```
 
 ### Docker Compose (Integrated Stack)
@@ -100,8 +104,8 @@ Notes:
 ### Quick Test
 
 ```bash
-# Test with curl
-curl -X POST http://localhost:8080/ \
+# Test with curl (using localhost:5000 when running with --network=host)
+curl -X POST http://localhost:5000/ \
   -H "Content-Type: application/json" \
   -d '{
     "jsonrpc": "2.0",
@@ -350,7 +354,7 @@ Notes:
 
 ```bash
 # Create a support ticket
-curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-ticket-001",
   "method": "message/send",
@@ -609,7 +613,7 @@ See [docs/deployment.md](docs/deployment.md) for detailed instructions.
 
 ```bash
 # 1) Help/capabilities
-curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
   "jsonrpc":"2.0",
   "id":"req-help-001",
   "method":"message/send",
@@ -617,7 +621,7 @@ curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
 }'
 
 # 2) Create ticket
-curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
   "jsonrpc":"2.0",
   "id":"req-ticket-002",
   "method":"message/send",
@@ -625,7 +629,7 @@ curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
 }'
 
 # 3) Sentiment analysis
-curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
   "jsonrpc":"2.0",
   "id":"req-sentiment-001",
   "method":"message/send",
@@ -633,7 +637,7 @@ curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
 }'
 
 # 4) Analytics request
-curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
   "jsonrpc":"2.0",
   "id":"req-analytics-001",
   "method":"message/send",
@@ -641,7 +645,7 @@ curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
 }'
 
 # 5) Finance request
-curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
   "jsonrpc":"2.0",
   "id":"req-finance-001",
   "method":"message/send",
@@ -649,7 +653,7 @@ curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
 }'
 
 # 6) Scheduling request
-curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
   "jsonrpc":"2.0",
   "id":"req-schedule-001",
   "method":"message/send",
@@ -676,8 +680,8 @@ curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
 
 **Agent not responding**
 - Check Groq API key is valid
-- Verify server is running (accessible on port 8080)
-- Check logs: `docker compose logs -f`
+- Verify server is running (accessible on port 5000 with --network=host)
+- Check logs: `docker logs -f <container-name>` or `docker compose logs -f`
 
 **Connection error / DNS name resolution failures**
 - Symptom: `Connection error` or `Temporary failure in name resolution` in logs
@@ -688,7 +692,7 @@ curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
   - Build with host network when needed: `docker build --network=host -t unified-business-agent .`
 
 **Need to confirm active storage backend**
-- Check runtime backend directly: `curl http://localhost:8080/debug/storage`
+- Check runtime backend directly: `curl http://localhost:5000/debug/storage`
 - Compose mode should report `active_backend: mongodb`
 - Direct Docker mode without reachable MongoDB should report `active_backend: file` and show `file_database.path`
 

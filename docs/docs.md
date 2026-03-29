@@ -48,26 +48,46 @@ Fallback is enabled by design. All responses now include storage metadata so you
 
 ### Running the Agent
 
-**Option 1: Docker (Recommended)**
+**Option 1: Docker with Host Networking (Recommended)**
+
+This avoids DNS resolution issues and allows MongoDB Atlas connectivity.
+
+```bash
+# Build the image (use --network=host if DNS issues occur during build)
+docker build --network=host -t unified-business-agent .
+
+# Run with host networking (app accessible on localhost:5000)
+docker run -d --name uba-prod --network=host --env-file .env unified-business-agent
+
+# Check logs
+docker logs -f uba-prod
+
+# Check health
+curl http://localhost:5000/health
+
+# Check storage backend
+curl http://localhost:5000/debug/storage
+
+# Stop and remove
+docker stop uba-prod && docker rm uba-prod
+```
+
+**Option 2: Docker with Port Mapping (Alternative)**
+
+Use this if host networking is not available in your environment. May experience DNS issues.
 
 ```bash
 # Build the image
 docker build -t unified-business-agent .
 
-# Run the container (maps host port 8080 to container port 5000)
-docker run -d --name uba-test --env-file .env -p 8080:5000 unified-business-agent
+# Run with port mapping (host:5000 -> container:5000)
+docker run -d --name uba-test --env-file .env -p 5000:5000 unified-business-agent
 
-# Check logs
-docker logs -f uba-test
-
-# Check health
-curl http://localhost:8080/health
-
-# Stop and remove
-docker stop uba-test && docker rm uba-test
+# Access on localhost:5000
+curl http://localhost:5000/health
 ```
 
-**Option 2: Docker Compose**
+**Option 3: Docker Compose**
 
 ```bash
 # Start all services (agent + MongoDB)
@@ -80,7 +100,7 @@ docker compose logs -f
 docker compose down
 ```
 
-**Option 3: Local Development**
+**Option 4: Local Development**
 
 ```bash
 # Install dependencies
@@ -93,7 +113,11 @@ python -m src
 uvicorn src.__main__:app --reload --port 5000
 ```
 
-Note: When running locally without Docker, the agent runs on port 5000. When running in Docker, map host port 8080 to container port 5000.
+**Port Summary**:
+- **Host networking** (`--network=host`): Access on `localhost:5000`
+- **Port mapping** (`-p 5000:5000`): Access on `localhost:5000`
+- **Docker Compose**: Access on `localhost:5000` (configured in docker-compose.yml)
+- **Local development**: Access on `localhost:5000`
 
 ---
 
@@ -173,26 +197,73 @@ The server uses A2A over JSON-RPC 2.0.
 
 ## Complete curl Request Library
 
-All RPC requests go to `POST http://localhost:8080/`.
+All RPC requests go to `POST http://localhost:5000/`.
 
 ### Service Endpoints
 
+#### Chunk 1: Root Service Info
+
 ```bash
-# Root service info
-curl -X GET http://localhost:8080/
+curl -X GET http://localhost:5000/
+```
 
-# Health
-curl -X GET http://localhost:8080/health
+Sample response:
 
-# Active storage backend details
-curl -X GET http://localhost:8080/debug/storage
+```json
+{
+  "name": "Unified Business Agent",
+  "version": "1.0.0",
+  "transport": "jsonrpc",
+  "endpoint": "/"
+}
+```
+
+#### Chunk 2: Health Check
+
+```bash
+curl -X GET http://localhost:5000/health
+```
+
+Sample response:
+
+```json
+{
+  "status": "healthy",
+  "service": "prathamai-agent",
+  "agent_initialized": true,
+  "timestamp": "2026-03-29T11:18:52.856933"
+}
+```
+
+#### Chunk 3: Active Storage Backend
+
+```bash
+curl -X GET http://localhost:5000/debug/storage
+```
+
+Sample response:
+
+```json
+{
+  "status": "ok",
+  "storage": {
+    "active_backend": "mongodb",
+    "connected": true,
+    "config": {
+      "use_mongodb": true,
+      "mongodb_uri_set": true,
+      "fallback_db_path": "/tmp/business_agent_db.json"
+    }
+  }
+}
 ```
 
 ### Core A2A Requests
 
+#### Chunk 4: Capabilities Request
+
 ```bash
-# Capabilities
-curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-help-001",
   "method": "message/send",
@@ -203,9 +274,27 @@ curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
     }
   }
 }'
+```
 
-# Generic session-aware request
-curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
+Sample response:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "req-help-001",
+  "result": {
+    "status": {"state": "completed"},
+    "artifacts": [{"parts": [{"kind": "text", "text": "I can help with customer support, analytics, finance, scheduling, and document processing."}]}],
+    "metadata": {"storage": {"active_backend": "mongodb", "connected": true}}
+  }
+}
+```
+
+#### Chunk 5: Session-Aware Request
+
+```bash
+
+curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-core-001",
   "method": "message/send",
@@ -220,11 +309,27 @@ curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
 }'
 ```
 
+Sample response:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "req-core-001",
+  "result": {
+    "status": {"state": "completed"},
+    "sessionId": "session-demo-001",
+    "artifacts": [{"parts": [{"kind": "text", "text": "I can manage support tickets, analyze data, track expenses, schedule events, and process documents."}]}],
+    "metadata": {"storage": {"active_backend": "mongodb", "connected": true}}
+  }
+}
+```
+
 ### Customer Service Requests
 
+#### Chunk 6: Create Support Ticket
+
 ```bash
-# Create support ticket (deterministic pattern)
-curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-ticket-001",
   "method": "message/send",
@@ -238,9 +343,27 @@ curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
     }
   }
 }'
+```
 
-# Ticket status request
-curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
+Sample response:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "req-ticket-001",
+  "result": {
+    "status": {"state": "completed"},
+    "artifacts": [{"parts": [{"kind": "text", "text": "Ticket created successfully. ID: TICKET-1007. Priority: high. Customer: john@example.com. Storage backend: mongodb."}], "metadata": {"storage": {"active_backend": "mongodb", "connected": true}}}],
+    "metadata": {"storage": {"active_backend": "mongodb", "connected": true}}
+  }
+}
+```
+
+#### Chunk 7: Ticket Status Request
+
+```bash
+
+curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-ticket-status-001",
   "method": "message/send",
@@ -251,9 +374,27 @@ curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
     }
   }
 }'
+```
 
-# Sentiment analysis
-curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
+Sample response:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "req-ticket-status-001",
+  "result": {
+    "status": {"state": "completed"},
+    "artifacts": [{"parts": [{"kind": "text", "text": "Ticket TICKET-1007 is currently open and assigned to customer support queue."}]}],
+    "metadata": {"storage": {"active_backend": "mongodb", "connected": true}}
+  }
+}
+```
+
+#### Chunk 8: Sentiment Analysis
+
+```bash
+
+curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-sentiment-001",
   "method": "message/send",
@@ -264,9 +405,41 @@ curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
     }
   }
 }'
+```
 
-# FAQ request
-curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
+Sample success response:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "req-sentiment-001",
+  "result": {
+    "status": {"state": "completed"},
+    "artifacts": [{"parts": [{"kind": "text", "text": "Sentiment: negative. Confidence: high. Key signal: frustration with delayed support."}]}],
+    "metadata": {"storage": {"active_backend": "mongodb", "connected": true}}
+  }
+}
+```
+
+Sample rate-limit response (common during initial tests):
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "req-sentiment-001",
+  "result": {
+    "status": {"state": "completed"},
+    "artifacts": [{"parts": [{"kind": "text", "text": "I apologize, but I encountered an error processing your request: Error code: 429 ... rate_limit_exceeded ... Please try again in a few seconds."}]}],
+    "metadata": {"storage": {"active_backend": "mongodb", "connected": true}}
+  }
+}
+```
+
+#### Chunk 9: FAQ Request
+
+```bash
+
+curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-faq-001",
   "method": "message/send",
@@ -279,11 +452,26 @@ curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
 }'
 ```
 
+Sample response:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "req-faq-001",
+  "result": {
+    "status": {"state": "completed"},
+    "artifacts": [{"parts": [{"kind": "text", "text": "You can contact support via email at support@business.local or create a ticket through this agent."}]}],
+    "metadata": {"storage": {"active_backend": "mongodb", "connected": true}}
+  }
+}
+```
+
 ### Data Analytics Requests
 
+#### Chunk 10: Analyze Dataset
+
 ```bash
-# Analyze dataset
-curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-analytics-001",
   "method": "message/send",
@@ -294,9 +482,27 @@ curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
     }
   }
 }'
+```
 
-# Generate report
-curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
+Sample response:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "req-analytics-001",
+  "result": {
+    "status": {"state": "completed"},
+    "artifacts": [{"parts": [{"kind": "text", "text": "Dataset analysis complete. Rows: 12,431. Columns: 9. Top trend: Q1 growth in online sales."}]}],
+    "metadata": {"storage": {"active_backend": "mongodb", "connected": true}}
+  }
+}
+```
+
+#### Chunk 11: Generate Report
+
+```bash
+
+curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-report-001",
   "method": "message/send",
@@ -309,11 +515,26 @@ curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
 }'
 ```
 
+Sample response:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "req-report-001",
+  "result": {
+    "status": {"state": "completed"},
+    "artifacts": [{"parts": [{"kind": "text", "text": "Quarterly report generated for DS-001. File saved to /data/reports/quarterly_report_DS-001.pdf"}]}],
+    "metadata": {"storage": {"active_backend": "mongodb", "connected": true}}
+  }
+}
+```
+
 ### Finance Requests
 
+#### Chunk 12: Add Expense
+
 ```bash
-# Add expense
-curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-finance-001",
   "method": "message/send",
@@ -324,9 +545,27 @@ curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
     }
   }
 }'
+```
 
-# Budget check
-curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
+Sample response:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "req-finance-001",
+  "result": {
+    "status": {"state": "completed"},
+    "artifacts": [{"parts": [{"kind": "text", "text": "Expense added successfully. ID: EXP-1003. Amount: $125.50. Vendor: Staples."}]}],
+    "metadata": {"storage": {"active_backend": "mongodb", "connected": true}}
+  }
+}
+```
+
+#### Chunk 13: Budget Check
+
+```bash
+
+curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-budget-001",
   "method": "message/send",
@@ -339,11 +578,26 @@ curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
 }'
 ```
 
+Sample response:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "req-budget-001",
+  "result": {
+    "status": {"state": "completed"},
+    "artifacts": [{"parts": [{"kind": "text", "text": "Monthly office budget status: used 62%, remaining 38%. Current spend: $3,120 / $5,000."}]}],
+    "metadata": {"storage": {"active_backend": "mongodb", "connected": true}}
+  }
+}
+```
+
 ### Scheduling Requests
 
+#### Chunk 14: Schedule a Meeting
+
 ```bash
-# Schedule a meeting
-curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-schedule-001",
   "method": "message/send",
@@ -354,9 +608,27 @@ curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
     }
   }
 }'
+```
 
-# Find available slots
-curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
+Sample response:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "req-schedule-001",
+  "result": {
+    "status": {"state": "completed"},
+    "artifacts": [{"parts": [{"kind": "text", "text": "Meeting scheduled successfully for next Tuesday at 2:00 PM. Duration: 30 minutes."}]}],
+    "metadata": {"storage": {"active_backend": "mongodb", "connected": true}}
+  }
+}
+```
+
+#### Chunk 15: Find Available Slots
+
+```bash
+
+curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-slots-001",
   "method": "message/send",
@@ -369,11 +641,26 @@ curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
 }'
 ```
 
+Sample response:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "req-slots-001",
+  "result": {
+    "status": {"state": "completed"},
+    "artifacts": [{"parts": [{"kind": "text", "text": "Available 1-hour slots this week: Tue 11:00, Wed 15:00, Thu 10:00, Fri 14:00."}]}],
+    "metadata": {"storage": {"active_backend": "mongodb", "connected": true}}
+  }
+}
+```
+
 ### Document Requests
 
+#### Chunk 16: Process Invoice Document
+
 ```bash
-# Process invoice document
-curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-doc-001",
   "method": "message/send",
@@ -386,11 +673,26 @@ curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
 }'
 ```
 
+Sample response:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "req-doc-001",
+  "result": {
+    "status": {"state": "completed"},
+    "artifacts": [{"parts": [{"kind": "text", "text": "Invoice processed. Extracted total: $2,849.75, tax: $231.00, invoice number: INV-001."}]}],
+    "metadata": {"storage": {"active_backend": "mongodb", "connected": true}}
+  }
+}
+```
+
 ### Error and Validation Requests
 
+#### Chunk 17: Unknown Method (Method Not Found)
+
 ```bash
-# Unknown method (method not found)
-curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-error-001",
   "method": "unknown/method",
@@ -401,9 +703,27 @@ curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
     }
   }
 }'
+```
 
-# Empty message (invalid request)
-curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
+Sample response:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "req-error-001",
+  "error": {
+    "code": -32601,
+    "message": "Method not found",
+    "data": "Unsupported method: unknown/method"
+  }
+}
+```
+
+#### Chunk 18: Empty Message (Invalid Request)
+
+```bash
+
+curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-error-002",
   "method": "message/send",
@@ -416,6 +736,20 @@ curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
 }'
 ```
 
+Sample response:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "req-error-002",
+  "error": {
+    "code": -32600,
+    "message": "Invalid request structure",
+    "data": "Message text cannot be empty"
+  }
+}
+```
+
 ---
 
 ## Persistence and Storage Verification
@@ -423,7 +757,7 @@ curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
 ### 1) Check active backend
 
 ```bash
-curl -X GET http://localhost:8080/debug/storage
+curl -X GET http://localhost:5000/debug/storage
 ```
 
 Expected important fields:
@@ -589,8 +923,42 @@ Possible cause: running an older image.
 Fix:
 
 ```bash
-docker build -t unified-business-agent .
-docker run --rm -p 8080:5000 --env-file .env unified-business-agent
+# Build with host networking to avoid DNS issues
+docker build --network=host -t unified-business-agent .
+
+# Run with host networking (recommended)
+docker run --rm --network=host --env-file .env unified-business-agent
+
+# Or with port mapping if host networking not available
+# docker run --rm -p 5000:5000 --env-file .env unified-business-agent
+```
+
+### DNS Resolution Failures / Connection Timeouts
+
+**Symptoms**: 
+- MongoDB connection fails with "DNS operation timed out"
+- Groq API unreachable with "network/DNS" errors
+- Build hangs during pip install
+
+**Root Cause**: Docker container cannot resolve external hostnames
+
+**Fix**:
+```bash
+# Build with host networking
+docker build --network=host -t unified-business-agent .
+
+# Run with host networking (recommended solution)
+docker run -d --name uba-prod --network=host --env-file .env unified-business-agent
+
+# Access on localhost:5000
+curl http://localhost:5000/health
+```
+
+**Alternative**: Configure DNS in docker-compose.yml (already included):
+```yaml
+dns:
+  - 1.1.1.1
+  - 8.8.8.8
 ```
 
 ### Fallback file path differs from docs

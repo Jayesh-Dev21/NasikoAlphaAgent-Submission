@@ -7,7 +7,7 @@ services:
     image: unified-business-agent:latest
     container_name: unified-business-agent
     ports:
-      - "8080:5000"
+      - "5000:5000"
     env_file:
       - .env
     environment:

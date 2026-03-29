@@ -16,6 +16,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.agent import Agent
+from src.utils.database import get_storage_debug_info
 from src.models import (
     JSONRPCRequest,
     create_error_response,
@@ -110,7 +111,8 @@ async def root():
         "endpoints": {
             "rpc": "POST /",
             "health": "GET /health",
-            "docs": "GET /docs"
+            "docs": "GET /docs",
+            "debug_storage": "GET /debug/storage"
         }
     }
 
@@ -133,6 +135,28 @@ async def health_check():
         "timestamp": datetime.now().isoformat(),
         "agent_initialized": True
     }
+
+
+@app.get("/debug/storage")
+async def debug_storage():
+    """Return active storage backend and configuration hints."""
+    try:
+        return {
+            "status": "ok",
+            "storage": get_storage_debug_info(),
+            "timestamp": datetime.now().isoformat(),
+        }
+    except Exception as e:
+        logger.error(f"Failed to collect storage debug info: {e}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": "error",
+                "message": "Failed to collect storage debug info",
+                "error": str(e),
+                "timestamp": datetime.now().isoformat(),
+            },
+        )
 
 
 @app.post("/")
@@ -231,6 +255,14 @@ async def handle_message_send(rpc_request: JSONRPCRequest) -> Dict[str, Any]:
         ).model_dump()
 
     try:
+        storage_info = get_storage_debug_info()
+        response_metadata = {
+            "storage": {
+                "active_backend": storage_info.get("active_backend", "unknown"),
+                "connected": storage_info.get("connected", False),
+            }
+        }
+
         # 1. Extract Input
         user_message = rpc_request.params.message
         session_id = rpc_request.params.session_id or str(uuid.uuid4())
@@ -275,6 +307,7 @@ async def handle_message_send(rpc_request: JSONRPCRequest) -> Dict[str, Any]:
                 request_id=request_id,
                 text=response_text,
                 session_id=session_id,
+                metadata=response_metadata,
             )
             return response.model_dump()
         
@@ -294,6 +327,7 @@ async def handle_message_send(rpc_request: JSONRPCRequest) -> Dict[str, Any]:
             request_id=request_id,
             text=response_text,
             session_id=session_id,
+            metadata=response_metadata,
         )
         
         return response.model_dump()

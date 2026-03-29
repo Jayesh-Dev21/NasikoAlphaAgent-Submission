@@ -55,9 +55,42 @@ def get_database():
             logger.warning(f"⚠️  MongoDB connection failed: {e}")
     
     # Fallback to file-based database
-    logger.info("ℹ️  Using file-based database (development mode)")
-    _db_instance = FileDatabase()
+    fallback_path = os.getenv("FALLBACK_DB_PATH", "/tmp/business_agent_db.json")
+    logger.info(f"ℹ️  Using file-based database (development mode): {fallback_path}")
+    _db_instance = FileDatabase(fallback_path)
     return _db_instance
+
+
+def get_storage_debug_info() -> Dict[str, Any]:
+    """Return safe runtime information about active storage backend."""
+    db = get_database()
+    use_mongodb = os.getenv("USE_MONGODB", "true").lower() == "true"
+    mongodb_uri_set = bool(os.getenv("MONGODB_URI"))
+    fallback_path = os.getenv("FALLBACK_DB_PATH", "/tmp/business_agent_db.json")
+
+    backend = "mongodb" if db.__class__.__name__ == "MongoDatabase" else "file"
+
+    info: Dict[str, Any] = {
+        "active_backend": backend,
+        "connected": db.is_connected(),
+        "config": {
+            "use_mongodb": use_mongodb,
+            "mongodb_uri_set": mongodb_uri_set,
+            "fallback_db_path": fallback_path,
+        },
+    }
+
+    if backend == "mongodb":
+        info["mongodb"] = {
+            "database": getattr(db, "database_name", os.getenv("MONGODB_DATABASE", "business_agent")),
+            "uri_configured": mongodb_uri_set,
+        }
+    else:
+        info["file_database"] = {
+            "path": getattr(db, "db_path", fallback_path),
+        }
+
+    return info
 
 
 class Database(ABC):

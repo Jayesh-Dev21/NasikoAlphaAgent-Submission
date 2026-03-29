@@ -22,7 +22,7 @@ from src.core.executor import TaskExecutor
 from src.core.aggregator import ResultAggregator
 
 # Import database
-from src.utils.database import get_database
+from src.utils.database import get_database, get_storage_debug_info
 
 logger = logging.getLogger(__name__)
 
@@ -429,10 +429,17 @@ Always strive to provide maximum value while maintaining accuracy and profession
                 module = CustomerServiceModule(self.db)
                 result = module.execute("create_ticket", ticket_payload)
                 if result.get("success"):
+                    storage_backend = "unknown"
+                    try:
+                        storage_backend = get_storage_debug_info().get("active_backend", "unknown")
+                    except Exception:
+                        storage_backend = type(self.db).__name__.replace("Database", "").lower()
+
                     return (
                         f"Ticket created successfully. ID: {result.get('ticket_id')}. "
                         f"Priority: {result.get('priority', 'medium')}. "
-                        f"Customer: {result.get('customer_email')}."
+                        f"Customer: {result.get('customer_email')}. "
+                        f"Storage backend: {storage_backend}."
                     )
                 return f"Could not create ticket: {result.get('error', 'Unknown error')}"
             except Exception as exc:

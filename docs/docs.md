@@ -7,6 +7,7 @@ This document provides complete curl request examples, A2A architecture, and pro
 1. Getting Started
    - Prerequisites
    - Runtime Modes
+   - Running the Agent
 2. Understanding the A2A Protocol
    - JSON-RPC 2.0 Request Shape
    - JSON-RPC 2.0 Success Response Shape
@@ -44,6 +45,55 @@ This project supports two storage modes:
 2. **Fallback file mode**: if MongoDB is unreachable, writes continue to local file DB.
 
 Fallback is enabled by design. All responses now include storage metadata so you can see where data was written.
+
+### Running the Agent
+
+**Option 1: Docker (Recommended)**
+
+```bash
+# Build the image
+docker build -t unified-business-agent .
+
+# Run the container (maps host port 8080 to container port 5000)
+docker run -d --name uba-test --env-file .env -p 8080:5000 unified-business-agent
+
+# Check logs
+docker logs -f uba-test
+
+# Check health
+curl http://localhost:8080/health
+
+# Stop and remove
+docker stop uba-test && docker rm uba-test
+```
+
+**Option 2: Docker Compose**
+
+```bash
+# Start all services (agent + MongoDB)
+docker compose up -d --build
+
+# Follow logs
+docker compose logs -f
+
+# Stop services
+docker compose down
+```
+
+**Option 3: Local Development**
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Run with Python
+python -m src
+
+# Or run with auto-reload
+uvicorn src.__main__:app --reload --port 5000
+```
+
+Note: When running locally without Docker, the agent runs on port 5000. When running in Docker, map host port 8080 to container port 5000.
 
 ---
 
@@ -123,26 +173,26 @@ The server uses A2A over JSON-RPC 2.0.
 
 ## Complete curl Request Library
 
-All RPC requests go to `POST http://localhost:5000/`.
+All RPC requests go to `POST http://localhost:8080/`.
 
 ### Service Endpoints
 
 ```bash
 # Root service info
-curl -X GET http://localhost:5000/
+curl -X GET http://localhost:8080/
 
 # Health
-curl -X GET http://localhost:5000/health
+curl -X GET http://localhost:8080/health
 
 # Active storage backend details
-curl -X GET http://localhost:5000/debug/storage
+curl -X GET http://localhost:8080/debug/storage
 ```
 
 ### Core A2A Requests
 
 ```bash
 # Capabilities
-curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-help-001",
   "method": "message/send",
@@ -155,7 +205,7 @@ curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
 }'
 
 # Generic session-aware request
-curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-core-001",
   "method": "message/send",
@@ -174,7 +224,7 @@ curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
 
 ```bash
 # Create support ticket (deterministic pattern)
-curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-ticket-001",
   "method": "message/send",
@@ -190,7 +240,7 @@ curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
 }'
 
 # Ticket status request
-curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-ticket-status-001",
   "method": "message/send",
@@ -203,7 +253,7 @@ curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
 }'
 
 # Sentiment analysis
-curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-sentiment-001",
   "method": "message/send",
@@ -216,7 +266,7 @@ curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
 }'
 
 # FAQ request
-curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-faq-001",
   "method": "message/send",
@@ -233,7 +283,7 @@ curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
 
 ```bash
 # Analyze dataset
-curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-analytics-001",
   "method": "message/send",
@@ -246,7 +296,7 @@ curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
 }'
 
 # Generate report
-curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-report-001",
   "method": "message/send",
@@ -263,7 +313,7 @@ curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
 
 ```bash
 # Add expense
-curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-finance-001",
   "method": "message/send",
@@ -276,7 +326,7 @@ curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
 }'
 
 # Budget check
-curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-budget-001",
   "method": "message/send",
@@ -293,7 +343,7 @@ curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
 
 ```bash
 # Schedule a meeting
-curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-schedule-001",
   "method": "message/send",
@@ -306,7 +356,7 @@ curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
 }'
 
 # Find available slots
-curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-slots-001",
   "method": "message/send",
@@ -323,7 +373,7 @@ curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
 
 ```bash
 # Process invoice document
-curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-doc-001",
   "method": "message/send",
@@ -340,7 +390,7 @@ curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
 
 ```bash
 # Unknown method (method not found)
-curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-error-001",
   "method": "unknown/method",
@@ -353,7 +403,7 @@ curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
 }'
 
 # Empty message (invalid request)
-curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-error-002",
   "method": "message/send",
@@ -373,7 +423,7 @@ curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
 ### 1) Check active backend
 
 ```bash
-curl -X GET http://localhost:5000/debug/storage
+curl -X GET http://localhost:8080/debug/storage
 ```
 
 Expected important fields:
@@ -540,7 +590,7 @@ Fix:
 
 ```bash
 docker build -t unified-business-agent .
-docker run --rm -p 5000:5000 --env-file .env unified-business-agent
+docker run --rm -p 8080:5000 --env-file .env unified-business-agent
 ```
 
 ### Fallback file path differs from docs

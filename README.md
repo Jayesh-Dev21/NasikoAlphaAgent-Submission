@@ -73,17 +73,35 @@ cp .env.example .env
 # Edit .env with your API keys
 
 # Build Docker image
-docker build -t prathamai-agent .
+docker build -t unified-business-agent .
 
-# Run the agent
-docker run -p 5000:5000 --env-file .env prathamai-agent
+# Run the agent (maps host port 8080 to container port 5000)
+docker run --rm -p 8080:5000 --env-file .env unified-business-agent
 ```
+
+### Docker Compose (Integrated Stack)
+
+```bash
+# Build and start API + MongoDB
+docker compose up -d --build
+
+# Follow logs
+docker compose logs -f
+
+# Stop services
+docker compose down
+```
+
+Notes:
+- Compose now starts both `unified-business-agent` and `mongodb`.
+- If MongoDB is unavailable, the app falls back to file DB at `FALLBACK_DB_PATH`.
+- For fallback persistence, `FALLBACK_DB_PATH` defaults to `/app/data/business_agent_db.json` (mounted to `./data`).
 
 ### Quick Test
 
 ```bash
 # Test with curl
-curl -X POST http://localhost:5000/ \
+curl -X POST http://localhost:8080/ \
   -H "Content-Type: application/json" \
   -d '{
     "jsonrpc": "2.0",
@@ -332,7 +350,7 @@ Notes:
 
 ```bash
 # Create a support ticket
-curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
   "jsonrpc": "2.0",
   "id": "req-ticket-001",
   "method": "message/send",
@@ -532,14 +550,14 @@ uvicorn src.__main__:app --reload --port 5000
 ### Docker Deployment
 
 ```bash
-# Build and run with docker-compose
-docker-compose up -d
+# Build and run integrated stack
+docker compose up -d --build
 
 # View logs
-docker-compose logs -f
+docker compose logs -f
 
 # Stop
-docker-compose down
+docker compose down
 ```
 
 ### Nasiko Platform Deployment
@@ -557,7 +575,7 @@ docker-compose down
 
 ```bash
 # Create deployment package
-zip -r prathamai-agent.zip . \
+zip -r unified-business-agent.zip . \
   -x "*.pyc" "*/__pycache__/*" "*/.git/*" "*/.env"
 
 # Upload via Nasiko dashboard
@@ -591,7 +609,7 @@ See [docs/deployment.md](docs/deployment.md) for detailed instructions.
 
 ```bash
 # 1) Help/capabilities
-curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
   "jsonrpc":"2.0",
   "id":"req-help-001",
   "method":"message/send",
@@ -599,7 +617,7 @@ curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
 }'
 
 # 2) Create ticket
-curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
   "jsonrpc":"2.0",
   "id":"req-ticket-002",
   "method":"message/send",
@@ -607,7 +625,7 @@ curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
 }'
 
 # 3) Sentiment analysis
-curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
   "jsonrpc":"2.0",
   "id":"req-sentiment-001",
   "method":"message/send",
@@ -615,7 +633,7 @@ curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
 }'
 
 # 4) Analytics request
-curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
   "jsonrpc":"2.0",
   "id":"req-analytics-001",
   "method":"message/send",
@@ -623,7 +641,7 @@ curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
 }'
 
 # 5) Finance request
-curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
   "jsonrpc":"2.0",
   "id":"req-finance-001",
   "method":"message/send",
@@ -631,7 +649,7 @@ curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
 }'
 
 # 6) Scheduling request
-curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{
   "jsonrpc":"2.0",
   "id":"req-schedule-001",
   "method":"message/send",
@@ -658,16 +676,21 @@ curl -X POST http://localhost:5000/ -H "Content-Type: application/json" -d '{
 
 **Agent not responding**
 - Check Groq API key is valid
-- Verify server is running on port 5000
-- Check logs: `docker-compose logs -f`
+- Verify server is running (accessible on port 8080)
+- Check logs: `docker compose logs -f`
 
 **Connection error / DNS name resolution failures**
 - Symptom: `Connection error` or `Temporary failure in name resolution` in logs
 - Root cause: container cannot consistently resolve external hosts (e.g., `api.groq.com`)
 - Fixes:
-  - Run with host network: `docker run --rm --network=host --env-file .env prathamai-agent`
+  - Run with host network: `docker run --rm --network=host --env-file .env unified-business-agent`
   - Use configured DNS in compose (`1.1.1.1`, `8.8.8.8`)
-  - Build with host network when needed: `docker build --network=host -t prathamai-agent .`
+  - Build with host network when needed: `docker build --network=host -t unified-business-agent .`
+
+**Need to confirm active storage backend**
+- Check runtime backend directly: `curl http://localhost:8080/debug/storage`
+- Compose mode should report `active_backend: mongodb`
+- Direct Docker mode without reachable MongoDB should report `active_backend: file` and show `file_database.path`
 
 **JSON-RPC validation error (`id` missing)**
 - `id` is optional now, but include it in production for traceability.
@@ -691,6 +714,7 @@ See [docs/deployment.md](docs/deployment.md) for more troubleshooting tips.
 
 ## Documentation
 
+- [API & A2A Docs](docs/docs.md) - Complete curl requests, A2A architecture, and project structure
 - [Development Plan](docs/plan.md) - Complete 25-day development roadmap
 - [Project Structure](docs/structure.md) - Detailed file organization
 - [Agent Architecture](docs/agents.md) - Tool and module specifications
